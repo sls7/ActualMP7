@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
@@ -60,7 +61,8 @@ public class MainActivity extends AppCompatActivity implements OnInitListener {
         photoLibrary.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                //Log.d(TAG, "Photo library button clicked");
+                Log.d("fuck", "Photo library button clicked");
+                Toast.makeText(getApplicationContext(), "Please work", Toast.LENGTH_LONG).show();
                 startOpenFile();
             }
         });
@@ -72,16 +74,17 @@ public class MainActivity extends AppCompatActivity implements OnInitListener {
                 startTakePhoto();
             }
         });
-        final Button read = findViewById(R.id.read);
-        takePhoto.setOnClickListener(new View.OnClickListener() {
+        final Button read = findViewById(R.id.reader);
+        read.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
                 Log.d("fuck", "Read button clicked");
+                Toast.makeText(getApplicationContext(), "Please work :D", Toast.LENGTH_LONG).show();
                 startRead();
             }
         });
         final Button pause = findViewById(R.id.pause);
-        takePhoto.setOnClickListener(new View.OnClickListener() {
+        pause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
                 //Log.d(TAG, "Stop button clicked");
@@ -110,24 +113,31 @@ public class MainActivity extends AppCompatActivity implements OnInitListener {
     }
 
     private void startRead() {
-        //String str = getAPI();
-        //String textToRead = getText(getAPI());
-        //Toast.makeText(getApplicationContext(), "No image selected",
-                //Toast.LENGTH_LONG).show();
-        myTTS.speak("hello world", TextToSpeech.QUEUE_FLUSH, null);
+       // String str = getAPI();
+        String textToRead = getText(getAPI());
+        Toast.makeText(getApplicationContext(), "Got here",
+                Toast.LENGTH_LONG).show();
+        myTTS.speak(textToRead, TextToSpeech.QUEUE_FLUSH, null);
     }
 
     private void stopReading() {
         myTTS.shutdown();
     }
 
-    String getText(String json) {
+    String getText(final String json) {
+        Log.d("fuck", "first getText" );
         JsonParser parser = new JsonParser();
+        Log.d("fuck", "second getText" );
         JsonObject result = parser.parse(json).getAsJsonObject();
+        Log.d("fuck", "3rd getText" );
         JsonObject recognitionResult = result.get("recognitionResult").getAsJsonObject();
+        Log.d("fuck", "4 getText" );
         JsonArray lines = recognitionResult.getAsJsonArray("lines");
+        Log.d("fuck", "5 getText" );
         JsonObject firstIndex = lines.get(0).getAsJsonObject();
+        Log.d("fuck", "6 getText" );
         String text = firstIndex.get("text").getAsString();
+        Log.d("fuck", "7 getText" );
         return text;
     }
 
@@ -234,49 +244,65 @@ public class MainActivity extends AppCompatActivity implements OnInitListener {
         HttpClient textClient = new DefaultHttpClient();
         HttpClient resultClient = new DefaultHttpClient();
         try {
+            Log.d("fuck", "first try" );
                 URI uri = new URI("https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/recognizeText?handwriting=false");
-                HttpPost textRequest = new HttpPost(uri);
-                textRequest.setHeader("Content-Type", "application/json");
-                textRequest.setHeader("Ocp-Apim-Subscription-Key", "dc30da04031b4deaadb5a04e391ac388");
-                StringEntity requestEntity = new StringEntity("{\"url\":http://htmldog.com/figures/spacingOutText.gif");
-                textRequest.setEntity(requestEntity);
-                HttpResponse textResponse = textClient.execute(textRequest);
-                if (textResponse.getStatusLine().getStatusCode() != 202) {
-                    HttpEntity entity = textResponse.getEntity();
-                    String jsonString = EntityUtils.toString(entity);
-                    JSONObject json = new JSONObject(jsonString);
-                    System.out.println("error");
-                    return "hi";
-                }
-                String operationLocation = null;
-                Header[] responseHeaders = textResponse.getAllHeaders();
-                for (Header header : responseHeaders) {
-                    if (header.getName().equals("Operation-Location")) {
-                        operationLocation = header.getValue();
-                        break;
+                    HttpPost textRequest = new HttpPost(uri);
+                    textRequest.setHeader("Content-Type", "application/json");
+                    textRequest.setHeader("Ocp-Apim-Subscription-Key", "dc30da04031b4deaadb5a04e391ac388");
+                    StringEntity requestEntity = new StringEntity("{\"url\":http://htmldog.com/figures/spacingOutText.gif");
+                    textRequest.setEntity(requestEntity);
+                    HttpResponse textResponse = textClient.execute(textRequest);
+                    if (textResponse.getStatusLine().getStatusCode() != 202) {
+                        HttpEntity entity = textResponse.getEntity();
+                        String jsonString = EntityUtils.toString(entity);
+                        JSONObject json = new JSONObject(jsonString);
+                        System.out.println("error");
+                        Log.d("fuck", "error 1");
+                        return "hi";
                     }
-                }
+
+                    String operationLocation = null;
+                    Header[] responseHeaders = textResponse.getAllHeaders();
+                    for (Header header : responseHeaders) {
+                        if (header.getName().equals("Operation-Location")) {
+                            operationLocation = header.getValue();
+                            break;
+                        }
+                    }
+                Log.d("fuck", "try catch" );
+
                 HttpGet resultRequest = new HttpGet(operationLocation);
+            Log.d("fuck", "before key" );
                 resultRequest.setHeader("Ocp-Apim-Subscription-Key", "dc30da04031b4deaadb5a04e391ac388");
                 HttpResponse resultResponse = resultClient.execute(resultRequest);
                 HttpEntity responseEntity = resultResponse.getEntity();
 
                 if (responseEntity != null) {
                     try {
+                        Log.d("fuck", "JSON try" );
                         String jsonString = EntityUtils.toString(responseEntity);
                         JSONObject json = new JSONObject(jsonString);
                         System.out.println("Text recognition result response: \n");
                         System.out.println(json.toString(2));
+                        Log.d("fuck", "API call" );
+                        Log.d("fuck", jsonString);
                         Toast.makeText(getApplicationContext(), jsonString,
                                 Toast.LENGTH_LONG).show();
                         return jsonString;
                     } catch (Exception e) {
+                        Log.d("fuck", "error 2" );
                         return "error";
                     }
                 }
             } catch (Exception e) {
+            Log.d("fuck", "error 3" );
+            Log.d("fuck", e.toString() );
                 return "oops it didn't work";
             }
+        Log.d("fuck", "error 4" );
             return "i hope it doesn't reach this line";
         }
     }
+    /*class APICall extends AsyncTask<String, Void, Void> {
+
+    }*/
