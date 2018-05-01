@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
@@ -30,10 +31,15 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpGetHC4;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.http.Header;
 import org.json.JSONObject;
@@ -240,15 +246,15 @@ public class MainActivity extends AppCompatActivity implements OnInitListener {
         //Log.d(TAG, "Added photo to gallery: " + toAdd);
     }
 
-    String getAPI() {
-        HttpClient textClient = new DefaultHttpClient();
+    public static String getAPI() {
+        /*HttpClient textClient = new DefaultHttpClient();
         HttpClient resultClient = new DefaultHttpClient();
         try {
             Log.d("fuck", "first try" );
                 URI uri = new URI("https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/recognizeText?handwriting=false");
                     HttpPost textRequest = new HttpPost(uri);
                     textRequest.setHeader("Content-Type", "application/json");
-                    textRequest.setHeader("Ocp-Apim-Subscription-Key", "dc30da04031b4deaadb5a04e391ac388");
+                    textRequest.setHeader("Ocp-Apim-Subscription-Key", "96beb069b1c948b4bbc6e89eb4e6c491");
                     StringEntity requestEntity = new StringEntity("{\"url\":http://htmldog.com/figures/spacingOutText.gif");
                     textRequest.setEntity(requestEntity);
                     HttpResponse textResponse = textClient.execute(textRequest);
@@ -273,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements OnInitListener {
 
                 HttpGet resultRequest = new HttpGet(operationLocation);
             Log.d("fuck", "before key" );
-                resultRequest.setHeader("Ocp-Apim-Subscription-Key", "dc30da04031b4deaadb5a04e391ac388");
+                resultRequest.setHeader("Ocp-Apim-Subscription-Key", "96beb069b1c948b4bbc6e89eb4e6c491");
                 HttpResponse resultResponse = resultClient.execute(resultRequest);
                 HttpEntity responseEntity = resultResponse.getEntity();
 
@@ -301,8 +307,62 @@ public class MainActivity extends AppCompatActivity implements OnInitListener {
             }
         Log.d("fuck", "error 4" );
             return "i hope it doesn't reach this line";
-        }
-    }
-    /*class APICall extends AsyncTask<String, Void, Void> {
+        }*/
+        String subscriptionKey = "96beb069b1c948b4bbc6e89eb4e6c491";
+        String uriBase = "https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/ocr";
+        //HttpClient httpClient = new DefaultHttpClient();
 
-    }*/
+        try
+        {
+            // NOTE: You must use the same location in your REST call as you used to obtain your subscription keys.
+            //   For example, if you obtained your subscription keys from westus, replace "westcentralus" in the
+            //   URL below with "westus".
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            HttpGetHC4 httpGet = new HttpGetHC4(uriBase);
+            CloseableHttpResponse response = httpClient.execute(httpGet);
+
+
+
+            /*URIBuilder uriBuilder = new URIBuilder(uriBase);
+
+            uriBuilder.setParameter("language", "unk");
+            uriBuilder.setParameter("detectOrientation ", "true");*/
+
+            // Request parameters.
+            //URI uri = uriBuilder.build();
+            HttpPost request = new HttpPost(uriBase);
+
+            // Request headers.
+            request.setHeader("Content-Type", "application/json");
+            request.setHeader("Ocp-Apim-Subscription-Key", subscriptionKey);
+
+            // Request body.
+            StringEntity requestEntity =
+                    new StringEntity("{\"url\":\"https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Atomist_quote_from_Democritus.png/338px-Atomist_quote_from_Democritus.png\"}");
+            request.setEntity(requestEntity);
+
+            // Execute the REST API call and get the response entity.
+            HttpResponse response = httpClient.execute(request);
+            HttpEntity entity = response.getEntity();
+
+            if (entity != null)
+            {
+                // Format and display the JSON response.
+                String jsonString = EntityUtils.toString(entity);
+                JSONObject json = new JSONObject(jsonString);
+                //System.out.println("REST Response:\n");
+                return (json.toString(2));
+            }
+        }
+        catch (Exception e)
+        {
+            // Display error message.
+            Log.d("fuck", e.getMessage());
+            //System.out.println(e.getMessage());
+        }
+        return "fuck";
+    }
+    }
+    abstract class APICall extends AsyncTask<String, Void, MainActivity> {
+
+    }
